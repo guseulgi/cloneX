@@ -1,4 +1,4 @@
-import { delay, http, HttpResponse } from "msw";
+import { delay, http, HttpResponse, StrictResponse } from "msw";
 import { faker } from "@faker-js/faker";
 
 function generateDate() {
@@ -11,7 +11,7 @@ function generateDate() {
 }
 const User = [
   { id: "elonmusk", nickname: "Elon Musk", image: "/yRsRRjGO.jpg" },
-  { id: "zerohch0", nickname: "제로초", image: "/5Udwvqim.jpg" },
+  { id: "zerocho", nickname: "제로초", image: "/5Udwvqim.jpg" },
   { id: "leoturtle", nickname: "레오", image: faker.image.avatar() },
 ];
 
@@ -221,6 +221,21 @@ export const handlers = [
     ]);
   }),
 
+  // 유저 프로필
+  http.get("/api/users/:userId", ({ request, params }): StrictResponse<any> => {
+    const { userId } = params;
+    const found = User.find((v) => v.id === userId);
+    if (found) {
+      return HttpResponse.json(found);
+    }
+    return HttpResponse.json(
+      { message: "no_such_user" },
+      {
+        status: 404,
+      }
+    );
+  }),
+
   // 내 게시글
   http.get("/api/users/:userID/posts", async ({ request, params }) => {
     const { userID } = params;
@@ -277,21 +292,45 @@ export const handlers = [
   }),
 
   // 게시글만
-  http.get("/api/users/:userID/posts/:postId", async ({ request, params }) => {
-    const { userID, postId } = params;
+  http.get("/api/posts/:postId", ({ request, params }): StrictResponse<any> => {
+    const { postId } = params;
+    if (parseInt(postId as string) > 10) {
+      return HttpResponse.json(
+        { message: "no_such_post" },
+        {
+          status: 404,
+        }
+      );
+    }
+    return HttpResponse.json({
+      postId,
+      User: User[0],
+      content: `${1} 게시글 아이디 ${postId}의 내용`,
+      Images: [
+        { imageId: 1, link: faker.image.urlLoremFlickr() },
+        { imageId: 2, link: faker.image.urlLoremFlickr() },
+        { imageId: 3, link: faker.image.urlLoremFlickr() },
+      ],
+      createdAt: generateDate(),
+    });
+  }),
+
+  // 게시글의 답글
+  http.get("/api/posts/:postId/comments", async ({ request, params }) => {
+    const { postId } = params;
 
     return HttpResponse.json([
       {
         postId: 1,
         User: User[0],
-        content: `${1} ${userID}'s post  ${postId}  `,
+        content: `${1} comments ${postId}  `,
         Images: [{ imageId: 1, link: faker.image.urlLoremFlickr() }],
         createdAt: generateDate(),
       },
       {
         postId: 2,
         User: User[0],
-        content: `${2} ${userID}'s post  ${postId}`,
+        content: `${2} comments ${postId}`,
         Images: [
           { imageId: 1, link: faker.image.urlLoremFlickr() },
           { imageId: 2, link: faker.image.urlLoremFlickr() },
@@ -301,14 +340,14 @@ export const handlers = [
       {
         postId: 3,
         User: User[0],
-        content: `${3} ${userID}'s post  ${postId}`,
+        content: `${3} comments ${postId}`,
         Images: [],
         createdAt: generateDate(),
       },
       {
         postId: 4,
         User: User[0],
-        content: `${4} ${userID}'s post  ${postId}`,
+        content: `${4} comments ${postId}`,
         Images: [
           { imageId: 1, link: faker.image.urlLoremFlickr() },
           { imageId: 2, link: faker.image.urlLoremFlickr() },
@@ -320,7 +359,7 @@ export const handlers = [
       {
         postId: 5,
         User: User[0],
-        content: `${5} ${userID}'s post  ${postId}`,
+        content: `${5} comments ${postId}`,
         Images: [
           { imageId: 1, link: faker.image.urlLoremFlickr() },
           { imageId: 2, link: faker.image.urlLoremFlickr() },
@@ -330,64 +369,6 @@ export const handlers = [
       },
     ]);
   }),
-
-  // 게시글의 답글
-  http.get(
-    "/api/users/:userID/posts/:postId/comments",
-    async ({ request, params }) => {
-      const { userID, postId } = params;
-
-      return HttpResponse.json([
-        {
-          postId: 1,
-          User: User[0],
-          content: `${1} ${userID}'s post -> comments ${postId}  `,
-          Images: [{ imageId: 1, link: faker.image.urlLoremFlickr() }],
-          createdAt: generateDate(),
-        },
-        {
-          postId: 2,
-          User: User[0],
-          content: `${2} ${userID}'s post -> comments ${postId}`,
-          Images: [
-            { imageId: 1, link: faker.image.urlLoremFlickr() },
-            { imageId: 2, link: faker.image.urlLoremFlickr() },
-          ],
-          createdAt: generateDate(),
-        },
-        {
-          postId: 3,
-          User: User[0],
-          content: `${3} ${userID}'s post -> comments ${postId}`,
-          Images: [],
-          createdAt: generateDate(),
-        },
-        {
-          postId: 4,
-          User: User[0],
-          content: `${4} ${userID}'s post -> comments ${postId}`,
-          Images: [
-            { imageId: 1, link: faker.image.urlLoremFlickr() },
-            { imageId: 2, link: faker.image.urlLoremFlickr() },
-            { imageId: 3, link: faker.image.urlLoremFlickr() },
-            { imageId: 4, link: faker.image.urlLoremFlickr() },
-          ],
-          createdAt: generateDate(),
-        },
-        {
-          postId: 5,
-          User: User[0],
-          content: `${5} ${userID}'s post -> comments ${postId}`,
-          Images: [
-            { imageId: 1, link: faker.image.urlLoremFlickr() },
-            { imageId: 2, link: faker.image.urlLoremFlickr() },
-            { imageId: 3, link: faker.image.urlLoremFlickr() },
-          ],
-          createdAt: generateDate(),
-        },
-      ]);
-    }
-  ),
 
   // 팔로우 추천
   http.get("/api/follwRecommends", ({ request }) => {

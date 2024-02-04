@@ -1,14 +1,14 @@
-import Link from 'next/link';
-import styles from './layout.module.css';
-import Image from 'next/image';
-import ZLogo from '/public/zlogo.png';
-import NavMenu from './_component/NavMenu';
-import LogOutButton from './_component/LogOutButton';
-import TrendSection from './_component/TrendSection';
-import FollowRecommend from './_component/FollowRecommaend';
-import RightSearch from './_component/RightSearch';
-import { auth } from '@/auth';
-import RQProvider from './_component/RQProvider';
+import Link from "next/link";
+import styles from "./layout.module.css";
+import Image from "next/image";
+import ZLogo from "/public/zlogo.png";
+import NavMenu from "./_component/NavMenu";
+import LogOutButton from "./_component/LogOutButton";
+import TrendSection from "./_component/TrendSection";
+import RightSearch from "./_component/RightSearch";
+import { auth } from "@/auth";
+import RQProvider from "./_component/RQProvider";
+import FollowRecommendSection from "./_component/FollowRecommendSection";
 
 type Props = {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ export default async function AfterLoginLayout({ children, modal }: Props) {
       <header className={styles.leftSectionWrapper}>
         <section className={styles.leftSection}>
           <div className={styles.leftSectionFixed}>
-            <Link className={styles.logo} href={session?.user ? '/home' : '/'}>
+            <Link className={styles.logo} href={session?.user ? "/home" : "/"}>
               <div className={styles.logoPill}>
                 <Image src={ZLogo} alt="logo" width={40} height={40} />
               </div>
@@ -63,9 +63,7 @@ export default async function AfterLoginLayout({ children, modal }: Props) {
               <TrendSection />
               <div className={styles.followRecommend}>
                 <h3>팔로우 추천</h3>
-                <FollowRecommend />
-                <FollowRecommend />
-                <FollowRecommend />
+                <FollowRecommendSection />
               </div>
             </section>
           </div>

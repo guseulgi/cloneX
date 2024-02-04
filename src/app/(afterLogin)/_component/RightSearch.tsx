@@ -1,17 +1,35 @@
-'use client';
+"use client";
 
-import SearchForm from './SearchForm';
-import style from './rightSearch.module.css';
-import { usePathname } from 'next/navigation';
+import SearchForm from "./SearchForm";
+import style from "./rightSearch.module.css";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export default function RightSearch() {
   const pathname = usePathname();
-  const onChangeFollow = () => {};
-  const onChangeAll = () => {};
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  if (pathname === '/explore') return null;
+  const onChangeFollow = () => {
+    let url = `/search?q=${searchParams.toString()}&pf=on`;
+    if (searchParams.has("f")) {
+      url += `${searchParams.get("f")}`;
+    }
+    router.replace(url);
+  };
 
-  if (pathname === '/search') {
+  const onChangeAll = () => {
+    let url = `/search?q=${searchParams.get("q")}`;
+
+    if (searchParams.has("f")) {
+      url += `${searchParams.get("f")}`;
+    }
+
+    router.replace(url);
+  };
+
+  if (pathname === "/explore") return null;
+
+  if (pathname === "/search") {
     return (
       <div>
         <h5 className={style.filterTitle}>검색 필터</h5>
@@ -43,7 +61,7 @@ export default function RightSearch() {
   }
 
   return (
-    <div style={{ marginBottom: 60, width: 'inherit' }}>
+    <div style={{ marginBottom: 60, width: "inherit" }}>
       <SearchForm />
     </div>
   );
