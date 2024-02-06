@@ -1,16 +1,20 @@
-'use client';
+"use client";
 
-import { signOut, useSession } from 'next-auth/react';
-import style from './logoutButton.module.css';
-import { useRouter } from 'next/navigation';
+import { signOut, useSession } from "next-auth/react";
+import style from "./logoutButton.module.css";
+import { useRouter } from "next/navigation";
+import { Session } from "next-auth";
 
-export default function LogoutButton() {
+type Props = {
+  me: Session;
+};
+
+export default function LogoutButton({ me }: Props) {
   const router = useRouter();
-  const { data: me } = useSession(); // 내 정보 바꿔치기 가능
 
   const onLogout = () => {
     signOut({ redirect: false }).then(() => {
-      router.replace('/');
+      router.replace("/");
     });
   };
 
