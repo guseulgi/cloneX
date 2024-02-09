@@ -1,30 +1,32 @@
-'use client';
+"use client";
 
-import { ChangeEventHandler, useState, FormEventHandler } from 'react';
-import styles from './login.module.css';
-import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { ChangeEventHandler, useState, FormEventHandler } from "react";
+import styles from "./login.module.css";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
-  const [id, setId] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
   const router = useRouter();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    setMessage('');
+    setMessage("");
 
     try {
-      await signIn('credentials', {
+      const response = await signIn("credentials", {
         username: id,
         password: password,
         redirect: false,
       });
-      router.replace('/home');
+      if (!response?.error) {
+        setMessage("아이디와 비밀번호가 일치하지 않습니다.");
+      } else router.replace("/home");
     } catch (err) {
       console.log(err);
-      setMessage('아이디와 비밀번호가 일치하지 않습니다.');
+      setMessage("아이디와 비밀번호가 일치하지 않습니다.");
     }
   };
 

@@ -1,41 +1,122 @@
-'use client';
+"use client";
 
-import { useRef, useState, ChangeEventHandler, FormEventHandler } from 'react';
-import style from './postForm.module.css';
+import { useRef, useState, ChangeEventHandler, FormEventHandler } from "react";
+import style from "./postForm.module.css";
+import { Session } from "@auth/core/types";
+import TextAreaAutosize from "react-textarea-autosize";
+import { useQueryClient } from "@tanstack/react-query";
+import { Post } from "@/model/Post";
 
-export default function PostForm() {
+type Props = { me: Session | null };
+
+export default function PostForm({ me }: Props) {
   const imageRef = useRef<HTMLInputElement>(null);
-  const [content, setContent] = useState('');
-  const me = {
-    id: 'zerohch0',
-    image: '/5Udwvqim.jpg',
-  };
+  const [preview, setPreview] = useState<
+    Array<{ dataUrl: string; file: File } | null>
+  >([]);
+  const [content, setContent] = useState("");
+  const queryClient = useQueryClient();
 
   const onChange: ChangeEventHandler<HTMLTextAreaElement> = (e) => {
     setContent(e.target.value);
   };
 
-  const onSubmit: FormEventHandler = (e) => {
+  const onSubmit: FormEventHandler = async (e) => {
     e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("content", content);
+    preview.forEach((p) => {
+      p && formData.append("images", p.file);
+    });
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/posts`,
+        {
+          method: "post",
+          credentials: "include",
+          body: formData,
+        }
+      );
+      if (response.status === 201) {
+        setContent("");
+        setPreview([]);
+        const newPost = await response.json();
+        queryClient.setQueryData(
+          ["posts", "recommends"],
+          (prevData: { pages: Post[][] }) => {
+            const shallow = { ...prevData, pages: [...prevData.pages] };
+            shallow.pages[0] = [...shallow.pages[0]];
+            prevData.pages[0].unshift(newPost);
+            return shallow;
+          }
+        );
+      }
+    } catch (err) {}
   };
 
   const onClickButton = () => {
     imageRef.current?.click();
   };
 
+  const onChangeFiles: ChangeEventHandler<HTMLInputElement> = (e) => {
+    e.preventDefault();
+
+    if (e.target.files) {
+      Array.from(e.target.files).forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreview((prevPreview) => {
+            const prev = [...prevPreview];
+            prev[idx] = { dataUrl: reader.result as string, file: file };
+            return prev;
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const onRemoveImage = (index: number) => () => {
+    setPreview((prevPreview) => {
+      const prev = [...prevPreview];
+      prev[index] = null;
+      return prev;
+    });
+  };
+
   return (
     <form className={style.postForm} onSubmit={onSubmit}>
       <div className={style.postUserSection}>
         <div className={style.postUserImage}>
-          <img src={me.image} alt={me.id} />
+          <img src={me?.user?.image as string} alt={me?.user?.id} />
         </div>
       </div>
       <div className={style.postInputSection}>
-        <textarea
+        <TextAreaAutosize
           value={content}
           onChange={onChange}
           placeholder="무슨 일이 일어나고 있나요?"
         />
+        <div style={{ display: "flex" }}>
+          {preview.map(
+            (v, idx) =>
+              v && (
+                <div key={idx} style={{ flex: 1 }} onClick={onRemoveImage(idx)}>
+                  <img
+                    src={v.dataUrl}
+                    alt="미리보기"
+                    style={{
+                      width: "100%",
+                      objectFit: "contain",
+                      maxHeight: 100,
+                    }}
+                  />
+                </div>
+              )
+          )}
+        </div>
         <div className={style.postButtonSection}>
           <div className={style.footerButtons}>
             <div className={style.footerButtonLeft}>
@@ -45,6 +126,7 @@ export default function PostForm() {
                 multiple
                 hidden
                 ref={imageRef}
+                onChange={onChangeFiles}
               />
               <button
                 className={style.uploadButton}

@@ -1,12 +1,12 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import style from "./logoutButton.module.css";
 import { useRouter } from "next/navigation";
-import { Session } from "next-auth";
+import { Session } from "@auth/core/types";
 
 type Props = {
-  me: Session;
+  me: Session | null;
 };
 
 export default function LogoutButton({ me }: Props) {
