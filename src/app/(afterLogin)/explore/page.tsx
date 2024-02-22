@@ -2,6 +2,11 @@ import style from "./explore.module.css";
 import SearchForm from "../_component/SearchForm";
 import TrendSection from "./_component/TrendSection";
 
+export const metadata = {
+  title: "검색 / Z",
+  description: "X.com 클론 코딩",
+};
+
 export default function ExplorePage() {
   return (
     <main className={style.main}>

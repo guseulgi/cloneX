@@ -7,6 +7,11 @@ import Loading from "@/app/(afterLogin)/home/loading";
 import TabDeciderSuspense from "@/app/(afterLogin)/home/_component/TabDeciderSuspense";
 import { auth } from "@/auth";
 
+export const metadata = {
+  title: "홈 / Z",
+  description: "X.com 클론 코딩",
+};
+
 export default async function Home() {
   const session = await auth();
 

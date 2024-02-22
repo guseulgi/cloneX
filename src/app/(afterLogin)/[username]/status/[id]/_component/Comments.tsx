@@ -11,7 +11,6 @@ type Props = {
 export default function Comments({ id }: Props) {
   const queryClient = useQueryClient();
   const post = queryClient.getQueryData(["posts", id]);
-
   const { data, error } = useQuery<
     IPost[],
     Object,
@@ -20,11 +19,10 @@ export default function Comments({ id }: Props) {
   >({
     queryKey: ["posts", id, "comments"],
     queryFn: getComments,
-    staleTime: 60 * 1000,
+    staleTime: 60 * 1000, // fresh -> stale, 5분이라는 기준
     gcTime: 300 * 1000,
     enabled: !!post,
   });
-
   if (post) {
     return data?.map((post) => <Post post={post} key={post.postId} />);
   }

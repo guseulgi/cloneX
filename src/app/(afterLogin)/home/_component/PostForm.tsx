@@ -1,10 +1,16 @@
 "use client";
 
-import { useRef, useState, ChangeEventHandler, FormEventHandler } from "react";
+import {
+  useRef,
+  useState,
+  ChangeEventHandler,
+  FormEventHandler,
+  FormEvent,
+} from "react";
 import style from "./postForm.module.css";
 import { Session } from "@auth/core/types";
 import TextAreaAutosize from "react-textarea-autosize";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Post } from "@/model/Post";
 
 type Props = { me: Session | null };
@@ -17,32 +23,28 @@ export default function PostForm({ me }: Props) {
   const [content, setContent] = useState("");
   const queryClient = useQueryClient();
 
-  const onChange: ChangeEventHandler<HTMLTextAreaElement> = (e) => {
-    setContent(e.target.value);
-  };
+  const mutation = useMutation({
+    mutationFn: async (e: FormEvent) => {
+      e.preventDefault();
 
-  const onSubmit: FormEventHandler = async (e) => {
-    e.preventDefault();
+      const formData = new FormData();
+      formData.append("content", content);
+      preview.forEach((p) => {
+        p && formData.append("images", p.file);
+      });
 
-    const formData = new FormData();
-    formData.append("content", content);
-    preview.forEach((p) => {
-      p && formData.append("images", p.file);
-    });
+      return await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/posts`, {
+        method: "post",
+        credentials: "include",
+        body: formData,
+      });
+    },
 
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/posts`,
-        {
-          method: "post",
-          credentials: "include",
-          body: formData,
-        }
-      );
-      if (response.status === 201) {
-        setContent("");
-        setPreview([]);
-        const newPost = await response.json();
+    async onSuccess(response, variable) {
+      setContent("");
+      setPreview([]);
+      const newPost = await response.json();
+      if (queryClient.getQueryData(["posts", "recommends"])) {
         queryClient.setQueryData(
           ["posts", "recommends"],
           (prevData: { pages: Post[][] }) => {
@@ -53,7 +55,30 @@ export default function PostForm({ me }: Props) {
           }
         );
       }
-    } catch (err) {}
+      if (queryClient.getQueryData(["posts", "followings"])) {
+        queryClient.setQueryData(
+          ["posts", "followings"],
+          (prevData: { pages: Post[][] }) => {
+            const shallow = {
+              ...prevData,
+              pages: [...prevData.pages],
+            };
+            shallow.pages[0] = [...shallow.pages[0]];
+            shallow.pages[0].unshift(newPost);
+            return shallow;
+          }
+        );
+      }
+    },
+
+    onError(error) {
+      console.error(error);
+      alert("업로드 중 에러가 발생했습니다.");
+    },
+  });
+
+  const onChange: ChangeEventHandler<HTMLTextAreaElement> = (e) => {
+    setContent(e.target.value);
   };
 
   const onClickButton = () => {
@@ -87,7 +112,7 @@ export default function PostForm({ me }: Props) {
   };
 
   return (
-    <form className={style.postForm} onSubmit={onSubmit}>
+    <form className={style.postForm} onSubmit={mutation.mutate}>
       <div className={style.postUserSection}>
         <div className={style.postUserImage}>
           <img src={me?.user?.image as string} alt={me?.user?.id} />
